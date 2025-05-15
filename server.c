@@ -7,6 +7,14 @@
 #pragma comment(lib, "ws2_32.lib")
 // for th user is message
 char Buffer[100];
+typedef struct 
+{
+    char Username[100];
+    SOCKET Clients;
+}Clients;
+int UsernameCount;
+Clients User[100];
+int Counter=0;
 // for receiving and printing message from teh client
 unsigned __stdcall ReceivingAndPrintingData(void *param);
 int main()
@@ -46,6 +54,7 @@ int main()
     SOCKET Client;
     while(TRUE)
     {
+        UsernameCount=0;
         Client=accept(ServerSocket,(struct sockaddr *)&ClientData,&sizeData);
         SOCKET *ClientAdress=(SOCKET *)malloc(sizeof(SOCKET));
         *ClientAdress = Client;
@@ -65,7 +74,14 @@ unsigned __stdcall ReceivingAndPrintingData(void *param)
     {
         memset(Buffer, 0, sizeof(Buffer));
         int resultnumber = recv(*(SOCKET*)param,Buffer,sizeof(Buffer),0);
-        if(resultnumber>0)
+        if(resultnumber>0 && UsernameCount==0)
+        {
+            Buffer[resultnumber]='\0';
+            User[Counter].Clients=*(SOCKET *)param;
+            strcpy(User[Counter++].Username,Buffer);
+            UsernameCount++;
+        }
+        else if(resultnumber>0)
         {
             Buffer[resultnumber]='\0';
             if(strncmp(Buffer,"quit",4)==0)
@@ -74,7 +90,13 @@ unsigned __stdcall ReceivingAndPrintingData(void *param)
             }
             else
             {
-                printf("the message says :%s",Buffer);
+                for(int i=0;i<Counter;i++)
+                {
+                    if(User[i].Clients==*(SOCKET *)param)
+                    {
+                        printf(" %s says : %s",User[i].Username,Buffer);
+                    }
+                }
             }
 
         }
