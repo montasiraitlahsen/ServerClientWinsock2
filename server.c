@@ -107,6 +107,14 @@ unsigned __stdcall ReceivingAndPrintingData(void *param)
                     if(User[i].Clients==*(SOCKET *)param)
                     {
                         printf("%s says : %s",User[i].Username,Buffer);
+                        for(int i=0;i<Counter;i++)
+                        {
+                            if(User[i].Clients!=*(SOCKET *)param)
+                            {
+                                send(User[i].Clients,Username,strlen(Username),0);
+                                send(User[i].Clients,Buffer,strlen(Buffer),0);
+                            }
+                        }
                     }
                 }
             }
