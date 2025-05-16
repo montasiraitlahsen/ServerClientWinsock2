@@ -4,6 +4,7 @@
 #include <ws2tcpip.h>
 #include <process.h>
 #include <string.h>
+#include <stdbool.h>
 #pragma comment(lib, "ws2_32.lib")
 // for th user is message
 char Buffer[100];
@@ -54,7 +55,6 @@ int main()
     SOCKET Client;
     while(TRUE)
     {
-        UsernameCount=0;
         Client=accept(ServerSocket,(struct sockaddr *)&ClientData,&sizeData);
         SOCKET *ClientAdress=(SOCKET *)malloc(sizeof(SOCKET));
         *ClientAdress = Client;
@@ -70,18 +70,30 @@ int main()
 }
 unsigned __stdcall ReceivingAndPrintingData(void *param)
 {
-    while(TRUE)
+    char Username[100];
+    bool Check=FALSE;
+    int resultnumber = recv(*(SOCKET*)param,Username,sizeof(Username),0);
+    if(resultnumber > 0)
     {
-        memset(Buffer, 0, sizeof(Buffer));
-        int resultnumber = recv(*(SOCKET*)param,Buffer,sizeof(Buffer),0);
-        if(resultnumber>0 && UsernameCount==0)
+        Username[resultnumber]='\0';
+        for(int i=0;i<Counter;i++)
         {
-            Buffer[resultnumber]='\0';
+            if(strcmp(User[i].Username,Username)==0)
+            {
+                Check=TRUE;
+            }
+        }
+        if(!Check)
+        {
             User[Counter].Clients=*(SOCKET *)param;
-            strcpy(User[Counter++].Username,Buffer);
+            strcpy(User[Counter++].Username,Username);
             UsernameCount++;
         }
-        else if(resultnumber>0)
+    }
+    while(TRUE)
+    {   
+        int resultnumber = recv(*(SOCKET*)param,Buffer,sizeof(Buffer),0);
+        if(resultnumber>0)
         {
             Buffer[resultnumber]='\0';
             if(strncmp(Buffer,"quit",4)==0)
@@ -94,11 +106,10 @@ unsigned __stdcall ReceivingAndPrintingData(void *param)
                 {
                     if(User[i].Clients==*(SOCKET *)param)
                     {
-                        printf(" %s says : %s",User[i].Username,Buffer);
+                        printf("%s says : %s",User[i].Username,Buffer);
                     }
                 }
             }
-
         }
         else
         {
