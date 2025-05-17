@@ -53,7 +53,13 @@ int main()
     {
         printf("send a message :");
         fgets(Buffer,sizeof(Buffer),stdin);
-        if(strncmp(Buffer,"quit",4)==0)
+        int lenb = strlen(Buffer);
+        while (lenb > 0 && (Buffer[lenb-1] == '\n' || Buffer[lenb-1] == '\r' || 
+        Buffer[lenb-1] == '\t' || Buffer[lenb-1] == ' '))
+        {
+            Buffer[--lenb] = '\0';
+        }
+        if(strcmp(Buffer,"quit")==0)
         {
             break;
         }
@@ -70,18 +76,32 @@ unsigned __stdcall receivingClient(void *param)
     int Result;
     while(TRUE)
     {
+        memset(Clients.username,0,sizeof(Clients.username));
         Result = recv(ClientSocket,Clients.username,sizeof(Clients.username),0);
         if(Result <= 0)
         {
             break;
         }
+        int lena = strlen(Clients.username);
+        while (lena > 0 && (Clients.username[lena-1] == '\n' || Clients.username[lena-1] == '\r' || 
+                          Clients.username[lena-1] == '\t' || Clients.username[lena-1] == ' '))
+        {
+            Clients.username[--lena] = '\0';
+        }    
+        memset(Clients.buffer,0,sizeof(Clients.buffer));
         Result = recv(ClientSocket,Clients.buffer,sizeof(Clients.buffer),0);
         if(Result <= 0)
         {
             break;
         }
-        printf("\n%s says : %s",Clients.username,Clients.buffer);
-        printf("send a message :");
+        int len = strlen(Clients.buffer);
+        while (len > 0 && (Clients.buffer[len-1] == '\n' || Clients.buffer[len-1] == '\r' || 
+                          Clients.buffer[len-1] == '\t' || Clients.buffer[len-1] == ' '))
+        {
+            Clients.buffer[--len] = '\0';
+        }
+        printf("\n-->%s says : %s",Clients.username,Clients.buffer);
+        printf("\nsend a message : ");
     }
     return 0;
 }

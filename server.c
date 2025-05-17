@@ -72,7 +72,14 @@ unsigned __stdcall ReceivingAndPrintingData(void *param)
 {
     char Username[100];
     bool Check=FALSE;
+    memset(Username,0,sizeof(Username));
     int resultnumber = recv(*(SOCKET*)param,Username,sizeof(Username),0);
+    int len = strlen(Username);
+    while (len > 0 && (Username[len-1] == '\n' || Username[len-1] == '\r' || 
+    Username[len-1] == '\t' || Username[len-1] == ' '))
+    {
+        Username[--len] = '\0';
+    }
     if(resultnumber > 0)
     {
         Username[resultnumber]='\0';
@@ -92,21 +99,34 @@ unsigned __stdcall ReceivingAndPrintingData(void *param)
     }
     while(TRUE)
     {   
+        memset(Buffer,0,sizeof(Buffer));
         int resultnumber = recv(*(SOCKET*)param,Buffer,sizeof(Buffer),0);
         if(resultnumber>0)
         {
-            Buffer[resultnumber]='\0';
-            if(strncmp(Buffer,"quit",4)==0)
+            int len = strlen(Buffer);
+            while (len > 0 && (Buffer[len-1] == '\n' || Buffer[len-1] == '\r' || 
+            Buffer[len-1] == '\t' || Buffer[len-1] == ' '))
+            {
+                Buffer[--len] = '\0';
+            }
+            Buffer[resultnumber] = '\0';
+            if(strcmp(Buffer,"quit")==0)
             {
                 break;
             }
             else
             {
+                int len = strlen(Buffer);
+                while (len > 0 && (Buffer[len-1] == '\n' || Buffer[len-1] == '\r' || 
+                Buffer[len-1] == '\t' || Buffer[len-1] == ' '))
+                {
+                    Buffer[--len] = '\0';
+                }
                 for(int i=0;i<Counter;i++)
                 {
                     if(User[i].Clients==*(SOCKET *)param)
                     {
-                        printf("%s says : %s",User[i].Username,Buffer);
+                        printf("-->%s says : %s\n",User[i].Username,Buffer);
                         for(int i=0;i<Counter;i++)
                         {
                             if(User[i].Clients!=*(SOCKET *)param)
