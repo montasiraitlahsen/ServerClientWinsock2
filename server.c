@@ -196,7 +196,7 @@ unsigned __stdcall ReceivingAndPrintingData(void *param)
         if(Message.User[i].Clients == *(SOCKET*)param)
         {
             Message.User[i].IsActive = FALSE;
-            printf("User %s disconnected\n", Message.User[i].Username);
+            printf("the User %s disconnected\n", Message.User[i].Username);
             break;
         }
     }
