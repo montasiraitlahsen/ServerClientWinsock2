@@ -28,7 +28,7 @@ unsigned __stdcall ReceivingAndPrintingData(void *param);
 int main()
 {
     Message.GeneralPrivate = FALSE;
-
+    
     WSADATA wsaData;
     int result = WSAStartup(MAKEWORD(2, 2), &wsaData);
     if (result != 0) {
@@ -96,7 +96,7 @@ unsigned __stdcall ReceivingAndPrintingData(void *param)
             if(strcmp(Message.User[i].Username,Username)==0)
             {
                 Message.User[i].Clients=*(SOCKET *)param;
-                Message.User[Counter].IsActive = TRUE;
+                Message.User[i].IsActive = TRUE;
                 Check=TRUE;
                 break;
             }
@@ -115,10 +115,8 @@ unsigned __stdcall ReceivingAndPrintingData(void *param)
     {  
         memset(Message.Recipient,0,sizeof(Message.Recipient));
         int resultnumberb = recv(*(SOCKET*)param,Message.Recipient,sizeof(Message.Recipient),0);
-        if(resultnumber <= 0)
+        if(resultnumberb <= 0)
         {
-            closesocket(*(SOCKET*)param);
-            free(param);
             break;
         }
         int lenr = strlen(Message.Recipient);
@@ -186,14 +184,12 @@ unsigned __stdcall ReceivingAndPrintingData(void *param)
         }
         else if(resultnumber <= 0)
         {
-            closesocket(*(SOCKET*)param);
-            free(param);
             break;
         }
     }
     for(int i = 0; i < Counter; i++)
     {
-        if(Message.User[i].Clients == *(SOCKET*)param)
+        if(Message.User[i].Clients == *(SOCKET *)param)
         {
             Message.User[i].IsActive = FALSE;
             printf("the User %s disconnected\n", Message.User[i].Username);
