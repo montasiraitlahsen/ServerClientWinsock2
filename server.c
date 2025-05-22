@@ -12,6 +12,7 @@ typedef struct
 {
     char Username[100];
     SOCKET Clients;
+    bool IsActive;
 }Clients;
 int UsernameCount;
 typedef struct
@@ -94,14 +95,19 @@ unsigned __stdcall ReceivingAndPrintingData(void *param)
         {
             if(strcmp(Message.User[i].Username,Username)==0)
             {
+                Message.User[i].Clients=*(SOCKET *)param;
+                Message.User[Counter].IsActive = TRUE;
                 Check=TRUE;
+                break;
             }
         }
         if(!Check)
         {
             Message.User[Counter].Clients=*(SOCKET *)param;
-            strcpy(Message.User[Counter++].Username,Username);
+            strcpy(Message.User[Counter].Username,Username);
+            Message.User[Counter].IsActive = TRUE;
             UsernameCount++;
+            Counter++;
         }
     }
     Message.GeneralPrivate = TRUE;
@@ -109,6 +115,12 @@ unsigned __stdcall ReceivingAndPrintingData(void *param)
     {  
         memset(Message.Recipient,0,sizeof(Message.Recipient));
         int resultnumberb = recv(*(SOCKET*)param,Message.Recipient,sizeof(Message.Recipient),0);
+        if(resultnumber <= 0)
+        {
+            closesocket(*(SOCKET*)param);
+            free(param);
+            break;
+        }
         int lenr = strlen(Message.Recipient);
         while (lenr > 0 && (Message.Recipient[lenr-1] == '\n' || Message.Recipient[lenr-1] == '\r' || 
         Message.Recipient[lenr-1] == '\t' || Message.Recipient[lenr-1] == ' '))
@@ -135,14 +147,15 @@ unsigned __stdcall ReceivingAndPrintingData(void *param)
                 {
                     if(Message.User[i].Clients==*(SOCKET *)param)
                     {
-                        for(int i=0;i<Counter;i++)
+                        for(int j=0;j<Counter;j++)
                         {
-                            if(Message.User[i].Clients!=*(SOCKET *)param)
+                            if(Message.User[j].Clients!=*(SOCKET *)param && Message.User[j].IsActive)
                             {
-                                send(Message.User[i].Clients,Username,strlen(Username),0);
-                                send(Message.User[i].Clients,Buffer,strlen(Buffer),0);
+                                send(Message.User[j].Clients,Username,strlen(Username),0);
+                                send(Message.User[j].Clients,Buffer,strlen(Buffer),0);
                             }
                         }
+                        break;
                     }
                 }
             }
@@ -151,10 +164,14 @@ unsigned __stdcall ReceivingAndPrintingData(void *param)
                 int  searching = 0;
                 for(int i=0;i<Counter;i++)
                 {
-                    if(strcmp(Message.Recipient,Message.User[i].Username) == 0)
+                    if(strcmp(Message.Recipient,Message.User[i].Username) == 0 && Message.User[i].IsActive)
                     {
-                        send(Message.User[i].Clients,Username,strlen(Username),0);
-                        send(Message.User[i].Clients,Buffer,strlen(Buffer),0);
+                        if(send(Message.User[i].Clients,Username,strlen(Username),0) == SOCKET_ERROR ||
+                           send(Message.User[i].Clients,Buffer,strlen(Buffer),0) == SOCKET_ERROR)
+                        {
+                            Message.User[i].IsActive = FALSE;
+                        }
+                        break;
                     }
                     else
                     {
@@ -166,6 +183,21 @@ unsigned __stdcall ReceivingAndPrintingData(void *param)
                     printf("the recipient are not found \n");
                 }
             }
+        }
+        else if(resultnumber <= 0)
+        {
+            closesocket(*(SOCKET*)param);
+            free(param);
+            break;
+        }
+    }
+    for(int i = 0; i < Counter; i++)
+    {
+        if(Message.User[i].Clients == *(SOCKET*)param)
+        {
+            Message.User[i].IsActive = FALSE;
+            printf("User %s disconnected\n", Message.User[i].Username);
+            break;
         }
     }
     closesocket(*(SOCKET*)param);
